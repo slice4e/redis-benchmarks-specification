@@ -1,17 +1,17 @@
 import argparse
 
 from redis_benchmarks_specification.__common__.env import (
-    SPECS_PATH_TEST_SUITES,
+    ALLOWED_PROFILERS,
+    DATASINK_RTS_AUTH,
     DATASINK_RTS_HOST,
     DATASINK_RTS_PORT,
-    DATASINK_RTS_AUTH,
-    DATASINK_RTS_USER,
     DATASINK_RTS_PUSH,
+    DATASINK_RTS_USER,
     MACHINE_NAME,
-    PROFILERS_ENABLED,
     PROFILERS,
     PROFILERS_DEFAULT,
-    ALLOWED_PROFILERS,
+    PROFILERS_ENABLED,
+    SPECS_PATH_TEST_SUITES,
 )
 
 
@@ -47,6 +47,12 @@ def create_client_runner_args(project_name):
         help="specify a test to run. By default will run all the tests"
         + " present in the folder specified in --test-suites-folder.",
     )
+    parser.add_argument(
+        "--tests-regexp",
+        type=str,
+        default=".*",
+        help="Interpret PATTERN as a regular expression to filter test names",
+    )
     parser.add_argument("--db_server_host", type=str, default="localhost")
     parser.add_argument("--db_server_port", type=int, default=6379)
     parser.add_argument("--cpuset_start_pos", type=int, default=0)
@@ -74,8 +80,8 @@ def create_client_runner_args(project_name):
         default=PROFILERS_ENABLED,
         action="store_true",
         help="Enable Identifying On-CPU and Off-CPU Time using perf/ebpf/vtune tooling. "
-        + "By default the chosen profilers are {}".format(PROFILERS_DEFAULT)
-        + "Full list of profilers: {}".format(ALLOWED_PROFILERS)
+        + f"By default the chosen profilers are {PROFILERS_DEFAULT}"
+        + f"Full list of profilers: {ALLOWED_PROFILERS}"
         + "Only available on x86 Linux platform and kernel version >= 4.9",
     )
 
@@ -129,5 +135,10 @@ def create_client_runner_args(project_name):
         "--cacert",
         default="",
         help="Use specified CA certs bundle for TLS",
+    )
+    parser.add_argument(
+        "--resp",
+        default="2",
+        help="Set up RESP protocol version",
     )
     return parser

@@ -4,6 +4,7 @@ import redis
 import yaml
 
 from redis_benchmarks_specification.__common__.package import get_version_string
+from redis_benchmarks_specification.__common__.runner import extract_testsuites
 from redis_benchmarks_specification.__common__.spec import extract_client_tool
 from redis_benchmarks_specification.__runner__.args import create_client_runner_args
 from redis_benchmarks_specification.__runner__.runner import (
@@ -166,7 +167,7 @@ def test_run_client_runner_logic():
     args = parser.parse_args(
         args=[
             "--test",
-            "../../utils/tests/test_data/test-suites/memtier_benchmark-10keys-100B-expire-use-case-with-variant.yml",
+            "../../utils/tests/test_data/test-suites/memtier_benchmark-2keys-stream-5-entries-xread-all-entries.yml",
             "--db_server_host",
             "{}".format(db_host),
             "--db_server_port",
@@ -181,13 +182,13 @@ def test_run_client_runner_logic():
 
     r = redis.Redis(host=db_host, port=db_port_int)
     total_keys = r.info("keyspace")["db0"]["keys"]
-    assert total_keys == 10
+    assert total_keys == 2
 
     # run while pushing to redistimeseries
     args = parser.parse_args(
         args=[
             "--test",
-            "../../utils/tests/test_data/test-suites/memtier_benchmark-10keys-100B-expire-use-case-with-variant.yml",
+            "../../utils/tests/test_data/test-suites/memtier_benchmark-2keys-stream-5-entries-xread-all-entries.yml",
             "--datasink_push_results_redistimeseries",
             "--datasink_redistimeseries_host",
             "{}".format(db_host),
@@ -207,4 +208,49 @@ def test_run_client_runner_logic():
 
     r = redis.Redis(host=db_host, port=db_port_int)
     total_keys = r.info("keyspace")["db0"]["keys"]
-    assert total_keys == 10
+    assert total_keys == 2
+    rts = redis.Redis(host=db_host, port=db_port_int)
+    total_keys = rts.info("keyspace")["db0"]["keys"]
+    assert total_keys > 0
+
+
+def test_extract_testsuites():
+    project_name = "tool"
+    project_version = "v0"
+    parser = argparse.ArgumentParser(
+        description="test",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser = create_client_runner_args(
+        get_version_string(project_name, project_version)
+    )
+    args = parser.parse_args(
+        args=[
+            "--test-suites-folder",
+            "./utils/tests/test_data/test-suites",
+        ]
+    )
+    tests = extract_testsuites(args)
+    assert len(tests) == 4
+
+    args = parser.parse_args(
+        args=[
+            "--test-suites-folder",
+            "./utils/tests/test_data/test-suites",
+            "--tests-regex",
+            ".*\.yml",
+        ]
+    )
+    tests = extract_testsuites(args)
+    assert len(tests) == 4
+
+    args = parser.parse_args(
+        args=[
+            "--test-suites-folder",
+            "./utils/tests/test_data/test-suites",
+            "--tests-regex",
+            ".*expire.*",
+        ]
+    )
+    tests = extract_testsuites(args)
+    assert len(tests) == 2

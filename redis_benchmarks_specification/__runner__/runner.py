@@ -3101,12 +3101,19 @@ def process_self_contained_coordinator_stream(
                         client_aggregated_results_folder,
                         local_benchmark_output_filename,
                     )
-                    logging.info(
-                        "Preserving local results file {} into {}".format(
-                            full_result_path, dest_fpath
+                    if full_result_path is not None:
+                        logging.info(
+                            "Preserving local results file {} into {}".format(
+                                full_result_path, dest_fpath
+                            )
                         )
-                    )
-                    shutil.copy(full_result_path, dest_fpath)
+                        shutil.copy(full_result_path, dest_fpath)
+                    else:
+                        logging.warning(
+                            "No result file path available to preserve for test {}".format(
+                                local_benchmark_output_filename
+                            )
+                        )
                 overall_result &= test_result
 
                 delete_temporary_files(
